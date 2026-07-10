@@ -1,3 +1,7 @@
+import { useState } from 'react'
+import { addToCart } from '../api/cart'
+import { useCart } from '../cart/CartContext'
+
 const currencyFormatters = {}
 
 function formatPrice(amount, currency) {
@@ -13,7 +17,16 @@ function formatPrice(amount, currency) {
 }
 
 export default function ProductCard({ product }) {
+  const { refreshCart } = useCart()
+  const [adding, setAdding] = useState(false)
   const outOfStock = product.stock === 0
+
+  function handleAddToCart() {
+    setAdding(true)
+    addToCart(product.id, 1)
+      .then(refreshCart)
+      .finally(() => setAdding(false))
+  }
 
   return (
     <div className="product-card">
@@ -28,6 +41,13 @@ export default function ProductCard({ product }) {
           {outOfStock ? 'Out of stock' : `${product.stock} in stock`}
         </span>
       </div>
+      <button
+        className="product-card-add"
+        onClick={handleAddToCart}
+        disabled={outOfStock || adding}
+      >
+        {adding ? 'Adding...' : 'Add to cart'}
+      </button>
     </div>
   )
 }
