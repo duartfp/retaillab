@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { addToCart } from '../api/cart'
 import { useCart } from '../cart/CartContext'
+import { useAuth } from '../auth/AuthContext'
 
 const currencyFormatters = {}
 
@@ -17,11 +19,18 @@ function formatPrice(amount, currency) {
 }
 
 export default function ProductCard({ product }) {
+  const { isAuthenticated } = useAuth()
   const { refreshCart } = useCart()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [adding, setAdding] = useState(false)
   const outOfStock = product.stock === 0
 
   function handleAddToCart() {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location } })
+      return
+    }
     setAdding(true)
     addToCart(product.id, 1)
       .then(refreshCart)

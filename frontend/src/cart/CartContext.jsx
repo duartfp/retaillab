@@ -1,15 +1,22 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { getCart } from '../api/cart'
+import { useAuth } from '../auth/AuthContext'
 
 const CartContext = createContext(null)
 
 export function CartProvider({ children }) {
+  const { isAuthenticated } = useAuth()
   const [cart, setCart] = useState(null)
 
   const refreshCart = useCallback(() => {
+    if (!isAuthenticated) {
+      setCart(null)
+      return Promise.resolve()
+    }
     return getCart().then(setCart)
-  }, [])
+  }, [isAuthenticated])
 
+  // Reload (or clear) the cart whenever login state changes.
   useEffect(() => {
     refreshCart()
   }, [refreshCart])
