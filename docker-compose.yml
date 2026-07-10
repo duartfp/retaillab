@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: retaillab-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: retaillab
+      POSTGRES_USER: retaillab
+      POSTGRES_PASSWORD: retaillab
+    ports:
+      - "5432:5432"
+    volumes:
+      - retaillab-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  retaillab-postgres-data:
