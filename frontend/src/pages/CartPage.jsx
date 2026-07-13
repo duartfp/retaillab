@@ -1,5 +1,8 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCart } from '../cart/CartContext'
 import { updateCartItem, removeCartItem } from '../api/cart'
+import { checkout } from '../api/orders'
 
 const currencyFormatters = {}
 
@@ -16,6 +19,9 @@ function formatPrice(amount, currency) {
 
 export default function CartPage() {
   const { cart, refreshCart } = useCart()
+  const navigate = useNavigate()
+  const [checkingOut, setCheckingOut] = useState(false)
+  const [error, setError] = useState(null)
 
   if (!cart) return <p>Loading cart...</p>
 
@@ -26,6 +32,18 @@ export default function CartPage() {
 
   function handleRemove(itemId) {
     removeCartItem(itemId).then(refreshCart)
+  }
+
+  function handleCheckout() {
+    setError(null)
+    setCheckingOut(true)
+    checkout()
+      .then((order) => {
+        refreshCart()
+        navigate(`/orders/${order.id}`, { state: { order } })
+      })
+      .catch(() => setError('Could not complete checkout. Please try again.'))
+      .finally(() => setCheckingOut(false))
   }
 
   if (cart.items.length === 0) {
@@ -70,6 +88,14 @@ export default function CartPage() {
       <div className="cart-total">
         <span>Total</span>
         <strong>{formatPrice(cart.total, cart.currency)}</strong>
+      </div>
+
+      {error && <p className="auth-error">{error}</p>}
+
+      <div className="checkout-bar">
+        <button className="checkout-button" onClick={handleCheckout} disabled={checkingOut}>
+          {checkingOut ? 'Placing order...' : 'Checkout'}
+        </button>
       </div>
     </div>
   )

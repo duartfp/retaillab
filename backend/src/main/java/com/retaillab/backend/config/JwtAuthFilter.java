@@ -40,18 +40,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authHeader.substring(BEARER_PREFIX.length());
-        String email;
+    String token = authHeader.substring(BEARER_PREFIX.length());
 
-        try {
-            email = jwtService.extractUsername(token);
-        } catch (Exception e) {
-            // Malformed or expired token, let the request continue unauthenticated
-            // rather than throwing here. Spring Security's access rules take it
-            // from there and return 401/403 as appropriate.
-            filterChain.doFilter(request, response);
-            return;
-        }
+    try {
+        String email = jwtService.extractUsername(token);
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
@@ -64,7 +56,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+    } catch (Exception e) {
+        SecurityContextHolder.clearContext();
+    }
 
-        filterChain.doFilter(request, response);
+    filterChain.doFilter(request, response);
     }
 }

@@ -1,5 +1,7 @@
 package com.retaillab.backend.cart.service;
 
+import com.retaillab.backend.auth.model.User;
+import com.retaillab.backend.auth.repository.UserRepository;
 import com.retaillab.backend.cart.dto.AddCartItemRequest;
 import com.retaillab.backend.cart.dto.CartItemResponse;
 import com.retaillab.backend.cart.dto.CartResponse;
@@ -12,6 +14,7 @@ import com.retaillab.backend.catalog.model.Product;
 import com.retaillab.backend.catalog.repository.ProductRepository;
 import com.retaillab.backend.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,15 +28,25 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
     /**
-     * No authentication yet, so the application works with a single,
-     * always-available cart. Created lazily on first use.
+     * Returns the authenticated user's cart, creating one if this is
+     * their first interaction with it. Every cart endpoint requires a
+     * valid JWT (see SecurityConfig), so an authenticated principal is
+     * always expected to be present here.
      */
     @Transactional
     public Cart getOrCreateCart() {
-        return cartRepository.findById(1L)
-                .orElseGet(() -> cartRepository.save(Cart.builder().build()));
+        User currentUser = currentUser();
+        return cartRepository.findByUserId(currentUser.getId())
+                .orElseGet(() -> cartRepository.save(Cart.builder().user(currentUser).build()));
+    }
+
+    private User currentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + email));
     }
 
     @Transactional
@@ -88,9 +101,9 @@ public class CartService {
                 .toList();
 
         BigDecimal total = itemResponses.stream()
-        .map(item -> item.subtotal())
-        .filter(java.util.Objects::nonNull)
-        .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
+                .map(item -> item.subtotal())
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
 
         String currency = itemResponses.stream()
                 .map(item -> item.currency())

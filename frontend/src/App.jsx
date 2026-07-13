@@ -3,6 +3,7 @@ import ProductListPage from './pages/ProductListPage.jsx'
 import CartPage from './pages/CartPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
+import OrderConfirmationPage from './pages/OrderConfirmationPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { useAuth } from './auth/AuthContext.jsx'
 import { useCart } from './cart/CartContext.jsx'
@@ -51,6 +52,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CartPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:orderId"
+            element={
+              <ProtectedRoute>
+                <OrderConfirmationPage />
               </ProtectedRoute>
             }
           />

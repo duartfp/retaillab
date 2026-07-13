@@ -1,5 +1,6 @@
 package com.retaillab.backend.cart.model;
 
+import com.retaillab.backend.auth.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,10 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A shopping cart. For now, the application has no authentication yet
- * (see SCRUM-21), so there is a single fixed cart in the system, always
- * fetched or created with id 1. Once user accounts exist, this will be
- * extended with a user reference and the "single cart" shortcut removed.
+ * A shopping cart, owned by exactly one user. One-to-one, a user has at
+ * most one cart, created lazily on their first cart interaction.
  */
 @Entity
 @Table(name = "cart")
@@ -29,6 +28,10 @@ public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
 
     @Builder.Default
     private Instant createdAt = Instant.now();
